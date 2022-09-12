@@ -11,7 +11,7 @@ pub struct MultiQrCode {
 
 impl MultiQrCode {
     pub fn new<D: AsRef<[u8]>>(data: D, version: Version, ec: EcLevel) -> Result<Self, QrError> {
-        Self::with_slack(data, version, ec, QR_VERSION_SLACK[version.to_number()])
+        Self::with_slack(data, version, ec, QR_VERSION_SLACK[version.to_index()])
     }
 
     pub fn with_slack<D: AsRef<[u8]>>(data: D, version: Version, ec: EcLevel, slack: usize) -> Result<Self, QrError> {
@@ -24,7 +24,7 @@ impl MultiQrCode {
         }
 
         // calculate sizes
-        let qr_size_total = QR_DATA_LENGTHS[version.to_number()][ec as usize];
+        let qr_size_total = QR_DATA_LENGTHS[version.to_index()][ec as usize];
         let qr_size_data = qr_size_total - (1 + slack);
 
         // create new qr codes for indexed data, add to res
@@ -53,11 +53,11 @@ impl MultiQrCode {
     }
 }
 
-trait ToNumber { 
-    fn to_number(&self) -> usize; 
-}
-impl ToNumber for Version {
-    fn to_number(&self) -> usize {
+// simple addition to Version to support easy conversion to index number on tables
+trait ToIndex { 
+    fn to_index(&self) -> usize; 
+} impl ToIndex for Version {
+    fn to_index(&self) -> usize {
         (match self {
             Version::Normal(x) => x-1,
             Version::Micro(x) => x+39
