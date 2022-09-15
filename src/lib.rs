@@ -85,6 +85,15 @@ impl MultiQrCode {
             code.render::<Luma<u8>>().build().save(path.with_extension(format!("{}.png", i))).unwrap();
         }
     }
+} impl ToString for MultiQrCode {
+    fn to_string(&self) -> String {
+        let strings = self.to_strings();
+        let mut string = String::new();
+        for qr_data in strings {
+            if let QrData::String(x) = qr_data { string.push_str(&x) }
+        }
+        string
+    }
 }
 
 // simple addition to Version to support easy conversion to index number on tables
@@ -147,9 +156,21 @@ mod tests {
     }
 
     #[test]
+    fn print_hello() {
+        let qr = MultiQrCode::new("Hello world!", Version::Normal(10), EcLevel::L).unwrap();
+        println!("{}", qr.to_string());
+    }
+
+    #[test]
     fn save_hello() {
         let qr = MultiQrCode::default("Hello world!").unwrap();
         qr.save("./test-hw.png");
+    }
+
+    #[test]
+    fn print_lipsum() {
+        let qr = MultiQrCode::new(LIPSUM, Version::Normal(10), EcLevel::L).unwrap();
+        println!("{}", qr.to_string());
     }
 
     #[test]
