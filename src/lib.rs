@@ -15,7 +15,7 @@ pub enum QrData {
 }
 
 impl QrData {
-    pub fn b64_from(code: &QrCode) -> Self {
+    pub fn base64_from(code: &QrCode) -> Self {
         let width = code.width();
         let mut bytes = vec![0u8; ((width * width) as f32 / 8.0).ceil() as usize];
         for (i, color) in code.to_colors().iter().enumerate() {
@@ -74,7 +74,7 @@ impl MultiQrCode {
     }
 
     pub fn to_base64(&self) -> Vec<QrData> {
-        self.codes.iter().map(|code| QrData::b64_from(code)).collect()
+        self.codes.iter().map(|code| QrData::base64_from(code)).collect()
     }
 
     pub fn save(&self, path: &str) {
@@ -99,6 +99,8 @@ trait ToIndex {
 
 #[cfg(test)]
 mod tests {
+    use more_asserts::assert_le;
+
     use super::*;
 
     const LIPSUM: &str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer tristique turpis eros, vel hendrerit purus laoreet vitae. Praesent consectetur non mauris quis fermentum. Vivamus vulputate mi sed felis mollis dapibus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Quisque vel tortor vitae ex blandit sodales in id diam. Morbi urna quam, lobortis id tristique a, imperdiet ac neque. Vivamus metus enim, posuere sed imperdiet in, tempor in purus. Nunc molestie, eros at dignissim commodo, ex eros ultrices augue, nec tristique turpis neque at ipsum. Phasellus sed malesuada justo. Sed lacus tellus, sodales quis pellentesque vitae, sagittis id augue. Quisque sit amet suscipit enim, in luctus lorem. Curabitur condimentum augue ac ornare mattis. Donec tempor pretium maximus.
@@ -112,13 +114,15 @@ mod tests {
     Phasellus consequat dictum eros, sit amet lobortis orci volutpat in. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam auctor bibendum venenatis. Cras est libero, feugiat sit amet massa id, semper lacinia velit. Phasellus justo augue, consequat ut dictum ut, gravida nec neque. Duis iaculis nisi vitae augue pellentesque ornare. Curabitur ullamcorper a urna ut lobortis. Praesent fermentum mattis facilisis. In hac habitasse platea dictumst. Vivamus nec lorem ullamcorper, fringilla tellus sit amet, facilisis nibh. Suspendisse id metus elementum, dignissim risus ac, blandit risus. Cras non ex at augue varius rhoncus. Pellentesque at ex nibh. Cras porttitor lobortis imperdiet. Vestibulum quis euismod turpis.";
 
     #[test]
-    fn calculate_minimum_slack() {
-        for version in 1..41 {
+    #[ignore]
+    fn confirm_minimum_slack() {
+        for version in 1_usize..41_usize {
             let mut slack: usize = 0;
             loop {
-                match MultiQrCode::with_slack(LIPSUM, Version::Normal(version), DEFAULT_EC_LEVEL, slack) {
+                match MultiQrCode::with_slack(LIPSUM, Version::Normal(version as i16), DEFAULT_EC_LEVEL, slack) {
                     Ok(_) => {
                         println!("Minimum slack for version {} is {}", version, slack);
+                        assert_le!(slack, QR_VERSION_SLACK[version-1], "Invalid slack for version {}: {} > {}", version, slack, QR_VERSION_SLACK[version-1]);
                         break;
                     }
                     _ => {
@@ -133,13 +137,13 @@ mod tests {
     #[test]
     fn save_hello() {
         let qr = MultiQrCode::default("Hello world!").unwrap();
-        qr.save("./test.png");
+        qr.save("./test-hw.png");
     }
 
     #[test]
     fn save_lipsum() {
         let qr = MultiQrCode::default(LIPSUM).unwrap();
-        qr.save("./test.png");
+        qr.save("./test-lipsum.png");
     }
 }
 
