@@ -2,10 +2,12 @@ use std::{path::Path};
 use base64::encode;
 use qrcode::{QrCode, Version, EcLevel, types::QrError, Color};
 use image::Luma;
+use serde::{Serialize, Deserialize};
 
 pub const DEFAULT_QR_VERSION: Version = Version::Normal(40);
 pub const DEFAULT_EC_LEVEL: EcLevel = EcLevel::L;
 
+#[derive(Serialize, Deserialize)]
 pub enum QrData {
     Base64 {
         width: usize,
