@@ -1,12 +1,36 @@
-use std::path::Path;
-use qrcode::{QrCode, Version, EcLevel, types::QrError};
+use std::{path::Path};
+use base64::encode;
+use qrcode::{QrCode, Version, EcLevel, types::QrError, Color};
 use image::Luma;
 
 pub const DEFAULT_QR_VERSION: Version = Version::Normal(40);
 pub const DEFAULT_EC_LEVEL: EcLevel = EcLevel::L;
 
+pub enum QrData {
+    Base64 {
+        width: usize,
+        data: String
+    },
+    String (String)
+}
+
+impl QrData {
+    pub fn b64_from(code: &QrCode) -> Self {
+        let width = code.width();
+        let mut bytes = vec![0u8; ((width * width) as f32 / 8.0).ceil() as usize];
+        for (i, color) in code.to_colors().iter().enumerate() {
+            let byte_index = i / 8;
+            let shift = 7 - i%8;
+            if let Color::Dark = color {
+                bytes[byte_index] |= 1u8 << shift;
+            }
+        }
+        QrData::Base64 { width, data: encode(bytes) }
+    }
+}
+
 pub struct MultiQrCode {
-    pub codes: Vec<QrCode>,
+    pub codes: Vec<QrCode>
 }
 
 impl MultiQrCode {
@@ -43,6 +67,14 @@ impl MultiQrCode {
 
     pub fn default<D: AsRef<[u8]>>(data: D) -> Result<Self, QrError> {
         Self::new(data, DEFAULT_QR_VERSION, DEFAULT_EC_LEVEL)
+    }
+
+    pub fn to_strings(&self) -> Vec<QrData> {
+        self.codes.iter().map(|code| QrData::String(code.render().light_color(' ').dark_color('#').build().to_string())).collect()
+    }
+
+    pub fn to_base64(&self) -> Vec<QrData> {
+        self.codes.iter().map(|code| QrData::b64_from(code)).collect()
     }
 
     pub fn save(&self, path: &str) {
