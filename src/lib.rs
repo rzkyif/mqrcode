@@ -137,6 +137,16 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
+    fn compare_string_vs_base64() {
+        let qr = MultiQrCode::default("Hello world!").unwrap();
+        let string = serde_json::to_string(&qr.to_strings()).unwrap();
+        let base64 = serde_json::to_string(&qr.to_base64()).unwrap();
+        println!("String:\n{}\nBase64:\n{}",string,base64);
+        assert_le!(base64.len(), string.len());
+    }
+
+    #[test]
     fn save_hello() {
         let qr = MultiQrCode::default("Hello world!").unwrap();
         qr.save("./test-hw.png");
